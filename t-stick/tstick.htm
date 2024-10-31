@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>t-stick</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../styles/stylesheet.css">
+  <link rel="icon" href="http://www.augustmckinney.com/favicon.ico">
+</head>
+<body>
+  <nav>
+		<a href="../index.htm">home</a>
+	  <a href="../music.htm">music</a>
+	  <a href="../technology.htm">technology</a>
+	  <a href="tstick.htm" class="current">t-stick</a>
+	  <a href="../vowl/vowl.htm">vowl</a>
+	  <a href="../audio-soup/audiosoup.htm">audio soup</a>
+  </nav>
+ 
+  <section>
+  	<img src="skyline.png" alt="a picture of food">
+    <header>
+      <h4>july 30th, 2024</h4>
+    </header>
+    <p>
+      when i began my internship at the input devices and music interaction laboratory (IDMIL)
+      at mcgill university this summer, my professor marcelo wanderley suggested that i focus 
+      on the t-stick. the t-stick is a digital musical instrument (DMI) pioneered by joseph 
+      malloch and andrew stewart at the IDMIL. it was first concieved in 2006, and has seen a 
+      few different iterations. more info on the t-stick can be found on the IDMIL website:
+    </p>
+    <a href="https://www.idmil.org/project/the-t-stick/"
+			 target="_blank" class="insetlink">t-stick</a>
+    <p>
+      i decided that i wanted to develop a practice with the t-stick, as i have with the piano, 
+      and to integrate the instrument into the musical contexts i am already a part of.
+    </p>
+    <p>
+      marcelo initially suggested that i begin with one of the early, wired models of the 
+      t-stick, as they were currently unused and sitting in a large cardboard box in the corner 
+      of the lab. i quickly discovered that there a few glaring reasons these early t-sticks 
+			were out of commission. firstly, clear documentation that detailed the process of using, 
+			testing, and troubleshooting these first-generation t-sticks was difficult to compile. 
+			after some digging around, and help from my peers in the lab, i was able to find a puredat
+			a patch designed to aid in t-stick configuration. while this patch allowed me to test the
+			wired t-sticks, it was difficult for me to parse the incoming data, and use it 
+			consistently and reliably. in addition, only one of these t-sticks appeared to be (mostly)
+			functioning. eventually, at the suggestion of one of the researchers in the lab, i
+			decided to use one of the newer wireless t-sticks.
+    </p>
+    <p>
+      using a wireless t-stick first required that i learn and understand the osc protocol. 
+      osc messages are sent from the t-stick, over a network, and are recieved by a connected 
+      computer. once iwas successfully recieving osc messages, i needed an interface for 
+			organizing the incoming data. i designed a pure data patch, similar to the one i had used 
+			with the wired t-sticks, which allows me to route the osc messages as i need to.
+		</p>
+		<p>
+			with a working t-stick and a method for delivering and sorting the data from its sensors, 
+			it was time to focus on sound generation. on the immanuel wilkins album "the 7th hand", 
+			drummer kweku plays a cymbal/bell percussion instrument which struck me the first time i 
+			heard it:
+		</p>
+		<a href="https://youtu.be/yAj8LKqBCsQ?feature=shared&t=222" 
+			 target="_blank" class="insetlink">cymbal/bell</a>
+		<p>
+			i wanted to interact with the t-stick as a percussionist, and i was heavily inspired by 
+			this sound. i needed to find a suitable synthesis method. i've had an interest in 
+			physical modelling for some time now, however i decided against the use of a physical 
+			model for this project, as the research it would require would distract me from my main 
+			goal. i then moved to an additive method, inspired by modal synthesis. while this was 
+			interesting, i encountered a few issues.
+		</p>
+		<p>
+			firstly, to obtain a harmonically complex sound via additive synthesis, one requires a 
+			large amount of sinusoidal oscillators. in pure data, the osc~ and cos~ objects are 
+			implemented via wavetable lookup. the computational cost of this procedure is within 
+			reason, given the relatively small number of oscillators i decided to initially use. 
+			however, i quickly noticed that, if i were to scale my first draft, my computer would 
+			have trouble running the patch smoothly in conjuction with the t-stick data routing 
+			patch. in addition, the number of parameters in the patch would've been unwieldy to use. 
+			while i could've modified and adjusted my patch to suit both my needs and the 
+			restrictions of my computer, i figured there was probably a more fruitful method. 
+			a first test/jam with some other musicians confirmed my thoughts:
+		</p>
+		<a href="https://www.youtube.com/watch?v=S6eObGCSesY" 
+			 target="_blank" class="insetlink">t-stick jam #1 (june 13th, 2024)</a>
+		<p>
+			it's clear that, regardless of my lack of facility with the t-stick, the sonic flexibility
+			of my patch in conjunction with the mapping i created was lacking.
+		</p>
+		<p>
+			after listening to a talk given by max mathews, john chowning, and curtis roads, i had FM 
+			synthesis on my mind. while i could've modified and adjusted my patch to suit both my 
+			needs and the restrictions of my computer, i realized that frequency modulation would 
+			be a more efficient and user-friendly way to obtain harmonically complex percussion 
+			sounds. keeping the general interface of the additive version of my patch, i put together 
+			a 2-operator FM synth, with frequency and decay controls available for both the carrier 
+			and the modulator. once i had the basic idea working, i needed to devise a suitable 
+			mapping from the t-stick controls to the patch.
+		</p>
+		<p>
+			i created sub-patches to derive sensor count, the number of sensors being touched, touch 
+			onset, the moment the t-stick is touched, and the time elapsed after it is touched. 
+			using these data, I was able to generate percussive sounds by touching the t-stick, and 
+			introduce timbral variation after a given time is elapsed. i mapped the decay time of 
+			both the carrier and modulator to the pressure sensor (FSR), to obtain longer sustained 
+			sounds with greater pressure. i'm currently in the process of figuring out how to use 
+			the gyroscope to detune the oscillators, however i've been struggling scale/map the data 
+			from the gyroscope in a playable way.
+		</p>
+		<p>
+			overall, one of the biggest difficulties of this whole process has been developing the 
+			interaction-to-sound feedback loop that is so necessary for musical practice. in my 
+			experience practicing the piano, paying close attention to how the subtle changes in my 
+			technique affect sound production has played a big role in my development on the 
+			instrument. as i change and elaborate on the my t-stick synth patch, my technique has to 
+			adapt. i'm hoping that as the patch reaches a stable state, more room will be available 
+			for this necessary process.
+		</p>
+	</section>
+
+	<section class="bottom">
+		<header>
+			<h4>august 23rd, 2024</h4>
+		</header>
+		<p>
+			speed and reliability are issues i've continually encountered with the puredata 
+			synthesis/interfacing patch i designed. when my computer is not actively recieving OSC 
+			messages from the t-stick, puredata's gui elements respond as expected. however, when i 
+			connect to the t-stick, the gui elements become almost unresponsive, and it makes it 
+			impossible to interact with the patch. sometimes, this is accompanied with serious 
+			latency, and overall it makes using the t-stick with my patch a less enjoyable 
+			experience. it is for this reason that i've decided to recreate my synthesizer in 
+			another audio programming langugage called supercollider. learning supercollider has 
+			been a goal of mine for some time, and i know a few other people who work using 
+			supercollider alongside the t-stick.
+		</p>
+		<p>
+			a peer of mine recommended eli fieldsteel's supercollider tutorials on youtube:
+		</p>
+		<a href="https://www.youtube.com/playlist?list=PLPYzvS8A_rTaNDweXe6PX4CXSGq4iEWYC" 
+			 target="_blank" class="insetlink">tutorial playlist</a>
+		<p>
+			i followed along with these tutorials until i felt ready to embark on my own. i began by 
+			creating a simple FM synthesizer, which helped me to learn the basics of audio signal 
+			flow, MIDI, and how a supercollider patch might be structured. i was able to get it 
+			working as expected with my MIDI keyboard, and i felt comfortable calling it complete. i 
+			then began the more daunting task of learning how to use receive and send OSC messages 
+			from supercollider. this turned out to be less difficult than i expected, and i was 
+			quickly able to start generating and controlling sound with the t-stick:
+		</p>
+		<a href="https://youtube.com/shorts/Wvf9D40JC5o?feature=share" 
+			 target="_blank" class="insetlink">first t-stick sounds in supercollider!</a>
+	</section>
+	
+	<footer>
+		<a href="https://www.instagram.com/augustmmckinney" target="_blank">instagram</a>
+		<a href="https://soundcloud.com/gooseesoog" target="_blank">soundcloud</a>
+		<a href="mailto:theonlyaugust@gmail.com">email</a>
+	</footer>
+</body>
+</html>

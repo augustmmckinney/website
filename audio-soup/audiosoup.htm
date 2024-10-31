@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>audio soup</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../styles/stylesheet.css">
+	<link rel="icon" href="http://www.augustmckinney.com/favicon.ico">
+</head>
+	<nav>
+		<a href="../index.htm">home</a>
+		<a href="../music.htm">music</a>
+		<a href="../technology.htm">technology</a>
+		<a href="../t-stick/tstick.htm">t-stick</a>
+		<a href="../vowl/vowl.htm">vowl</a>
+		<a href="audiosoup.htm" class="current">audio soup</a>
+	</nav>
+
+	<section>
+		<img src="ASinterface.png" alt="audio soup interface"> 
+		<p>
+			my aim for this project was to create a performable effect to work in tandem with an 
+			acoustic piano. i originally had 3 sub-goals:
+		</p>
+		<ol type="i">
+			<li>putting together an effects processing patch in puredata.</li>
+			<li>deciding how i'd like to interface with the patch.</li>
+			<li>figuring out how to most easily mic up the piano, and make the whole system 
+			convenient for performance.</li>
+		</ol>
+		<p>
+			my background is in piano performance, and since becoming interested in electronic 
+			music, i've been curious as to how i can integrate the skills i already have with the 
+			ones i'm currently developing. prior to starting this project, i hadn't seriously 
+			attempted to bridge my interests in these two areas. i found that in bringing 
+			electronics to the piano, or vice versa, i had difficulty retaining the artistic freedom 
+			i felt when creating with either tool separately. this motivated me to create an effect 
+			and interface that are performable both on their own and with the piano.
+		</p>
+	</section>
+		
+	<section>
+		<img src="ASdigsigflow.png" alt="a diagram of the patch signal flow">
+		<img src="ASreasigflow.png" alt="a picture of the midi controller">
+		<p>
+			the overall signal flow of the patch is as follows:
+		</p>
+		<ol type="i">
+			<li>audio, from a live input or a loaded sample, is sent to 2 circular buffers. when 
+			recording is activated, this audio is written into the buffers. a midi foot pedal 
+			controls whether or not recording is active. the recordhead slider denotes the position 
+			in the buffer at which audio will be written. the clear button clears the contents of 
+			both buffers.</li>
+			<li>there are 6 pairs of grain-readers (one for the left buffer, one for the right) that 
+			read audio from the buffers.  each of these pairs has a dedicated playback speed, 
+			transposition, and volume control (as seen in figure 1). fine tune offers finer 
+			transposition control. the radio object labeled loop # sets which grain-pair is being 
+			controlled.</li>
+			<li>while each of these parameters can be set for each grain-pair individually, there 
+			are also global grain controls, labeled speed and density. density controls the chance 
+			that any given grains parameters will be randomized, and speed controls the rate of 
+			randomization. these controls affect the left and right portion of each grain-pair 
+			individually.  the phase-lock button sets the overall position of each grain to the 
+			beginning of the buffer, and sets the playback speed of each grain to normal, syncing 
+			all the grains together in time with one another.</li>
+			<li>finally, volume at the output is controlled by the output slider. i've assigned 
+			various MIDI controls on my MIDI controller to each of the available parameters.</li>
+		</ol>
+		<img src="piezo1.png" alt="picture 1 of piezo contact mic">
+		<img src="piezo2.png" alt="picture 2 of piezo contact mic">
+		<img src="piezo3.png" alt="picture 3 of piezo contact mic">
+		<p>
+			i decided to use piezo contact mics to mic the piano. while the audio quality isn't
+			great, using contact microphones eliminates any risk of feedback while recording, and 
+			the low fidelity of the piezos adds some charm to the sound.
+		</p>
+	</section>
+
+	<section>
+		<img src="bufferpatch.png" alt="pd patch for circular buffer">
+		<img src="bufferinterface.png" alt="display for buffer contents">
+		<p>
+			when recording is initiated, incoming audio is recorded into the buffers. the recordhead
+ 			slider displays the portion of the buffers that is overwritten while recording is
+			enabled. when recording is initiated, writing begins, and the amplitude of the incoming 
+			audio is enveloped from 0 to 1. when recording is ended, the audio is enveloped from 1
+ 			to 0, and writing stops. this is done to prevent any sudden jumps in amplitude. if the
+ 			end of a buffer is reached while recording, then the record-head circles back to the
+ 			beginning of the buffer.
+		</p>
+		<img src="graindisplay1.png" alt="picture 1 of grain display">
+		<img src="graindisplay2.png" alt="picture 2 of grain display">
+		<img src="graindisplay3.png" alt="picture 3 of grain display">
+		<img src="graindisplay4.png" alt="picture 4 of grain display">
+		<p>
+			figure 6 illustrates the relationship between sample index and time when a buffer is 
+			played back at normal speed and normal pitch. one way to play the buffer at twice the 
+			pitch would be to play the buffer at twice the speed, however a change in playback speed 
+			may not be desired (fig. 7). borrowing a technique from granular synthesis, we can 
+			separate playback speed and playback pitch.
+		</p>
+		<img src="grainpatch.png" alt="pd patch for grain separation/manipulation">
+		<p>
+			each grain-reader reads through its corresponding buffer according to the sum of two 
+			sawtooth waves (called phasor~ in pd).  the first sawtooth determines playback pitch, the 
+			second determines playback speed. the pitch phasor reads through a small window of the 
+			buffer at a frequency corresponding to the desired pitch. the size of this window is 
+			determined by the window size slider in figure 8. for the purposes of my patch, i've 
+			decided to keep it at 2000 samples. at the beginning of each cycle, this smaller phasor 
+			is added to an offset value determined by the playback speed phasor. this offset 
+			compensates for any unwanted speed changes by overlapping windows, and repeating 
+			portions of the buffer (fig. 9), or skipping portions of the buffer (fig. 10). the sum 
+			of these sawtooth waves is sent to a tabread4~ object, which reads through the 
+			corresponding buffer. the sudden jumps in sample index cause a click at the beginning of 
+			each new window, so the amplitude of the output is scaled by a hanning function. this 
+			windowing is done with 50% overlap to maintain constant power.
+		</p>
+	</section>
+
+	</section>
+		<img src="microcontrols.png" alt="pd patch for micro-controls">
+		<p>
+			there are micro and macro controls for the patch. the micro controls are relatively 
+			straight-forward, and change the parameters of each individual grain-pair. using the 
+			loop # radio object (fig. 1), or the corresponding midi control, one can select which 
+			grain-pair is being affected. when any given micro control change is given, the value 
+			from that slider is prepended by a number (0-5) before being sent to the cloned 
+			grain-reader patch (fig. 6). the sub-patch above (fig. 12) shows how this is done, and 
+			how the MIDI controls are mapped.
+		</p>
+		<img src="macro1.png" alt="pd patch 1 for macro-controls">
+		<img src="macro2.png" alt="pd patch 2 for macro-controls">
+		<img src="macro3.png" alt="pd patch 3 for macro-controls">
+		<p>
+			the macro controls are a bit more convoluted. (fig. 13, 14, 15 below) the two macro 
+			controls are labeled speed and density. they function together to randomize the 
+			parameters of each grain. speed controls the rate of a metro~which bangs a random 
+			object. the outputted value is compared to a value determined by the density control, 
+			using the moses~ object. if density is low, then theprobability that parameter 
+			randomization will occur is low. figure 13 illustrates this process. if the random value 
+			passes the moses object, then one of the grains has its playback speed and pitch 
+			randomized. a random transposition value is chosen from a set determined in figure 14. 
+			there are four sets; no transposition, octave up or down, 5th up or 4th down, or any 
+			semitone within an octave from the original pitch. the active set can be selected by the 
+			user. in addition, a bang is sent to each of the random objects in figure 15, the output 
+			of which goes through another comparison against the density value. if this random value 
+			passes the test, then one of the grains is sent an amplitude envelope with a randomized 
+			duration.
+		</p>
+		<img src="output.png" alt="pd patch for audio output">
+		<p>
+			the audio output stage of the patch can be seen in figure 16. the objects labeled clone 
+			grain read are clones of the grain-reader patch (fig. 6). as stated earlier, all of the 
+			parameter changes sent to the clone objects are prepended by a clone number that 
+			addresses the parameter change to the correct clone. there are 6 clones that read from 
+			the left buffer, and 6 clones that read from the right buffer. the combined output of 
+			either side is scaled by the output slider (fig. 1). there is also a mute button in 
+			figure 1, which mutes the output. 
+		</p>
+	</section>
+
+	<section class="bottom">
+		<p> 
+			while i do feel that i accomplished most of what i set out to do, my original goals for i
+			this project were ambitious, and there are some things that i left out/didn't get to. i 
+			spent most of my time working on on the patch portion of the project, as it underwent a 
+			few different iterations. this left me little time to further develop the physical 
+			interface portion of the project, and i ended up using a midi controller that i already 
+			had to control the patch. while it works as intended, i would like to further explore 
+			interface design in the future. 
+		</p>
+  	<a href="https://www.youtube.com/embed/FI0zj63E2pw" target="_blank" 
+			 class="insetlink">timestretch/pitchshift demo</a>
+		<a href="https://www.youtube.com/embed/fUAju_OUPyo" target"_blank" 
+			 class="insetlink">looper demo</a>
+	</section>
+
+	<footer>
+		<a href="https://www.instagram.com/augustmmckinney" target="_blank">instagram</a>
+		<a href="https://soundcloud.com/gooseesoog" target="_blank">soundcloud</a>
+		<a href="mailto:theonlyaugust@gmail.com">email</a>
+	</footer>
+</body>
+</html>
